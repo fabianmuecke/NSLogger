@@ -138,6 +138,10 @@ extern void LoggerSetViewerHost(Logger *logger, CFStringRef hostName, UInt32 por
 extern CFStringRef LoggerGetViewerHostName(Logger *logger) NSLOGGER_NOSTRIP;
 extern UInt32 LoggerGetViewerPort(Logger *logger) NSLOGGER_NOSTRIP;
 
+// Set maximum number of entries being queued, if no buffer file is provided
+// Default is 0, meaning unlimited.
+extern void LoggerSetMaximumQueueEntries(Logger *logger, NSUInteger maximumEntries) NSLOGGER_NOSTRIP;
+
 // Configure the logger to use a local file for buffering, instead of memory.
 // - If you initially set a buffer file after logging started but while a logger connection
 //   has not been acquired, the contents of the log queue will be written to the buffer file

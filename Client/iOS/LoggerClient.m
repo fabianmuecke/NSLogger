@@ -131,6 +131,7 @@ struct Logger
 	CFMutableArrayRef bonjourServices;              // Services being tried
 	NSNetServiceBrowser *bonjourDomainBrowser;      // Domain browser
 	CFMutableArrayRef logQueue;                     // Message queue
+	NSUInteger logQueueMaxEntries;
 	pthread_mutex_t logQueueMutex;					// A mutex we use to protect access to the log queue and some critical variables
 	pthread_cond_t logQueueEmpty;
 	
@@ -458,6 +459,23 @@ UInt32 LoggerGetViewerPort(Logger *logger)
 	UInt32 result = logger ? logger->port : 0;
 	pthread_mutex_unlock(&logger->logQueueMutex);
 	return result;
+}
+
+void LoggerSetMaximumQueueEntries(Logger *logger, NSUInteger maximumEntries)
+{
+	logger = logger ?: LoggerGetDefaultLogger();
+	pthread_mutex_lock(&logger->logQueueMutex);
+	
+	logger->logQueueMaxEntries = maximumEntries;
+	if (maximumEntries)
+	{
+	    while (CFArrayGetCount(logger->logQueue) > maximumEntries)
+	    {
+	        CFArrayRemoveValueAtIndex(logger->logQueue, 0);
+	    }
+	}
+	
+	pthread_mutex_unlock(&logger->logQueueMutex);
 }
 
 void LoggerSetBufferFile(Logger *logger, CFStringRef absolutePath)
@@ -2611,7 +2629,16 @@ static void LoggerPushMessageToQueue(Logger *logger, CFDataRef message)
 	// Add the message to the log queue and signal the runLoop source that will trigger
 	// a send on the worker thread.
 	pthread_mutex_lock(&logger->logQueueMutex);
-	CFIndex idx = CFArrayGetCount(logger->logQueue);
+	
+	if (logger->logQueueMaxEntries)
+	{
+		while (CFArrayGetCount(logger->logQueue) >= logger->logQueueMaxEntries)
+		{
+			CFArrayRemoveValueAtIndex(logger->logQueue, 0);
+		}
+	}
+	
+    CFIndex idx = CFArrayGetCount(logger->logQueue);
 	if (idx)
 	{
 		// to prevent out-of-order messages (as much as possible), we try to transmit messages in the
