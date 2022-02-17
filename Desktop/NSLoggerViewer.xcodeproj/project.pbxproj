@@ -156,7 +156,7 @@
 		3DC4A4BF175BC188004A3A34 /* HockeySDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HockeySDK.framework; path = "Third Party/HockeySDK-Mac/HockeySDK.framework"; sourceTree = "<group>"; };
 		3DC4A4C6175BC3EF004A3A34 /* HockeyConf.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = HockeyConf.plist; path = Resources/HockeyConf.plist; sourceTree = "<group>"; };
 		3DC55EF10F436BBA005C61FD /* LoggerMessageCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LoggerMessageCell.h; path = Classes/LoggerMessageCell.h; sourceTree = "<group>"; };
-		3DC55EF20F436BBA005C61FD /* LoggerMessageCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LoggerMessageCell.m; path = Classes/LoggerMessageCell.m; sourceTree = "<group>"; };
+		3DC55EF20F436BBA005C61FD /* LoggerMessageCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LoggerMessageCell.m; path = Classes/LoggerMessageCell.m; sourceTree = "<group>"; usesTabs = 1; };
 		3DD2EB9114334BA8004EEB19 /* logfile.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = logfile.icns; path = Resources/Icon/logfile.icns; sourceTree = "<group>"; };
 		3DD2EB9214334BA8004EEB19 /* rawlogfile.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = rawlogfile.icns; path = Resources/Icon/rawlogfile.icns; sourceTree = "<group>"; };
 		3DD61AB5127F7617009871F1 /* LoggerClientInfoCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LoggerClientInfoCell.h; path = Classes/LoggerClientInfoCell.h; sourceTree = "<group>"; };

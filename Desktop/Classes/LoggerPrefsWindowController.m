@@ -83,6 +83,10 @@ void *advancedColorsArrayControllerDidChange = &advancedColorsArrayControllerDid
 		NSData *data = [NSKeyedArchiver archivedDataWithRootObject:[LoggerMessageCell defaultAttributes]];
 		_attributes = [NSKeyedUnarchiver unarchiveObjectWithData:data];
         _advancedColors = [NSMutableArray arrayWithArray:[[NSUserDefaults standardUserDefaults] objectForKey:@"advancedColors"]];
+        if (@available(macOS 11.0, *))
+        {
+            [[self window] setToolbarStyle:NSWindowToolbarStyleExpanded];
+        }
 	}
 	return self;
 }

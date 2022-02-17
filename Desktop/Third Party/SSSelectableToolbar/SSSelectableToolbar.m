@@ -40,7 +40,7 @@
 -(void) awakeFromNib
 {
 	// Set target / action on all buttons to make them clickable
-	NSArray* items = [self visibleItems];
+	NSArray* items = [self items];
 	for (NSToolbarItem* item in items)
 	{
 		if ([item isKindOfClass:[SSSelectableToolbarItem class]])
