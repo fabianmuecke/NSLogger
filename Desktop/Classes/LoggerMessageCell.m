@@ -324,7 +324,11 @@ NSString *const kMessageColumnWidthsChangedNotification = @"MessageColumnWidthsC
 			isBold = NO;
 			if ([colorName hasPrefix:@"bold"])
 			{
-				colorName = [colorName componentsSeparatedByString:@" "][1];
+				NSArray *components = [colorName componentsSeparatedByString:@" "];
+				if ([components count] > 1)
+				{
+					colorName = components[1];
+				}
 				isBold = YES;
 			}
 			if ([colorName hasPrefix:@"#"])
@@ -370,7 +374,7 @@ NSString *const kMessageColumnWidthsChangedNotification = @"MessageColumnWidthsC
 				color = [self colorFor:selectorName];
 			}
 		}
-		regexp = [[NSRegularExpression alloc] initWithPattern:colorSpec[@"regexp"] options:NSRegularExpressionCaseInsensitive error:&error];
+		regexp = [[NSRegularExpression alloc] initWithPattern:colorSpec[@"regexp"] options:NSRegularExpressionCaseInsensitive | NSRegularExpressionAnchorsMatchLines error:&error];
 		if (!regexp)
 		{
 			NSLog(@"** Warning: invalid regular expression '%@': %@", colorSpec[@"regexp"], error);
@@ -416,6 +420,11 @@ NSString *const kMessageColumnWidthsChangedNotification = @"MessageColumnWidthsC
 
 	for (regexp in sortedRegexps)
 	{
+		NSString *pattern = [regexp pattern];
+		if (![pattern hasPrefix:@"tag="] && ![string hasPrefix:@"level="])
+		{
+			continue;
+		}
 		NSArray *chunks = [regexp matchesInString:string options:0 range:NSMakeRange(0, [string length])];
 		if ([chunks count] > 0)
 		{
@@ -438,6 +447,48 @@ NSString *const kMessageColumnWidthsChangedNotification = @"MessageColumnWidthsC
 + (NSColor *)colorForMessage:(LoggerMessage *)message
 {
 	return [self colorForString:message.description];
+}
+
++ (NSAttributedString *)colorizedMessage:(NSString *)message attributes:(NSDictionary *)attributes
+{
+	NSMutableAttributedString *result = [[NSMutableAttributedString alloc] initWithString:message
+																			   attributes:attributes];
+	if (!advancedColors)
+	{
+		[self loadAdvancedColors];
+	}
+	NSRegularExpression *regexp;
+	NSArray *sortedRegexps = [[advancedColors allKeys] sortedArrayUsingComparator:
+		^NSComparisonResult(NSRegularExpression *_Nonnull regexp1,
+							NSRegularExpression *_Nonnull regexp2) {
+			return [regexp1.pattern compare:regexp2.pattern];
+		}];
+
+	for (regexp in sortedRegexps)
+	{
+		NSArray *chunks = [regexp matchesInString:message options:0 range:NSMakeRange(0, [message length])];
+		if ([chunks count] > 0)
+		{
+			NSColor *color = advancedColors[regexp];
+			NSTextCheckingResult *chunk;
+			for (chunk in chunks)
+			{
+				NSUInteger count = [chunk numberOfRanges];
+				for (NSUInteger i = 0; i < count; i++)
+				{
+					NSRange range = [chunk rangeAtIndex:i];
+					[result addAttribute:NSForegroundColorAttributeName value:color range:range];
+					if (color.isBold)
+					{
+						NSFont *font = attributes[NSFontAttributeName];
+						font = [[NSFontManager sharedFontManager] convertFont:font toHaveTrait:NSBoldFontMask];
+						[result addAttribute:NSFontAttributeName value:font range:range];
+					}
+				}
+			}
+		}
+	}
+	return result;
 }
 
 #pragma mark -
@@ -831,24 +882,26 @@ NSString *const kMessageColumnWidthsChangedNotification = @"MessageColumnWidthsC
 		attrs = [self messageTextAttributes];
 		// in case the message text is empty, use the function name as message text
 		// this is typically used to record a waypoint in the code flow
-		NSString *s = self.message.message;
-		if (![s length] && self.message.functionName)
-			s = self.message.functionName;
+		NSString *string = self.message.message;
+		if (![string length] && self.message.functionName)
+			string = self.message.functionName;
 
 		// very long messages can't be displayed entirely. No need to compute their full size,
 		// it slows down the UI to no avail. Just cut the string to a reasonable size, and take
 		// the calculations from here.
 		BOOL truncated = NO;
-		if ([s length] > 2048)
+		if ([string length] > 2048)
 		{
 			truncated = YES;
-			s = [s substringToIndex:2048];
+			string = [string substringToIndex:2048];
 		}
 
+		NSAttributedString *attributedString;
 		if (highlightedTextColor != nil)
 		{
 			attrs = [attrs mutableCopy];
 			attrs[NSForegroundColorAttributeName] = highlightedTextColor;
+            attributedString = [[NSAttributedString alloc] initWithString:string attributes:attrs];
 		}
 		else
 		{
@@ -864,12 +917,12 @@ NSString *const kMessageColumnWidthsChangedNotification = @"MessageColumnWidthsC
 					attrs[NSFontAttributeName] = font;
 				}
 			}
+			attributedString = [[self class] colorizedMessage:string attributes:attrs];
 		}
 
 		// compute display string size, limit to cell height
-		NSRect lr = [s boundingRectWithSize:r.size
-									options:(NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading)
-								 attributes:attrs];
+		NSRect lr = [attributedString boundingRectWithSize:r.size
+												   options:(NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading)];
 		if (NSHeight(lr) > NSHeight(r))
 			truncated = YES;
 		else
@@ -899,9 +952,8 @@ NSString *const kMessageColumnWidthsChangedNotification = @"MessageColumnWidthsC
 		}
 
 		r.size.height -= hintHeight;
-		[s drawWithRect:r
-				options:(NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading | NSStringDrawingTruncatesLastVisibleLine)
-			 attributes:attrs];
+		[attributedString drawWithRect:r
+							   options:(NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading | NSStringDrawingTruncatesLastVisibleLine)];
 
 		// Draw hint "Double click to see all text..." if needed
 		if (hint != nil)
