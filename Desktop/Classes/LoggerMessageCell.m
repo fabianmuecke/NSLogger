@@ -446,7 +446,12 @@ NSString *const kMessageColumnWidthsChangedNotification = @"MessageColumnWidthsC
 
 + (NSColor *)colorForMessage:(LoggerMessage *)message
 {
-	return [self colorForString:message.description];
+	NSColor *color = [self colorForString:message.description];
+	if (color)
+	{
+		return color;
+	}
+	return [self colorForString:[NSString stringWithFormat:@"level=%d", message.level]];
 }
 
 + (NSAttributedString *)colorizedMessage:(NSString *)message attributes:(NSDictionary *)attributes
